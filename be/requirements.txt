@@ -1,0 +1,8 @@
+fastapi
+numpy
+opencv-python
+paddleocr
+paddlepaddle
+python-multipart
+requests
+uvicorn
