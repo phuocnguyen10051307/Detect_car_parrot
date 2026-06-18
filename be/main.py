@@ -1,11 +1,12 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import requests
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from paddleocr import PaddleOCR
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from parser import (
     detect_card_color,
@@ -18,10 +19,35 @@ from parser import (
 
 
 class OCRUrlRequest(BaseModel):
-    image_url: str
+    image_url: str = Field(
+        ...,
+        description="Public image URL used for OCR",
+        examples=["https://example.com/sample.jpg"],
+    )
 
 
-app = FastAPI(title="Vehicle OCR Backend")
+class HealthCheckResponse(BaseModel):
+    status: str = Field(..., examples=["ok"])
+
+
+class OCRResponse(BaseModel):
+    document_type: str = Field(..., examples=["old"])
+    card_color: str = Field(..., examples=["blue_old"])
+    image_url: Optional[str] = Field(default=None, examples=["https://example.com/sample.jpg"])
+    plate: Optional[str] = Field(default=None, examples=["93A-115.16"])
+    engine: Optional[str] = Field(default=None, examples=["3A92UDY6060"])
+    frame: Optional[str] = Field(default=None, examples=["A13AHH005129"])
+    issue_date: Optional[str] = Field(default=None, examples=["19/04/2018"])
+
+
+app = FastAPI(
+    title="Vehicle OCR Backend",
+    description="API OCR cho giay to xe. Mo trang Swagger de upload anh hoac gui image_url va test truc tiep.",
+    version="1.0.0",
+    docs_url="/swagger",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -74,13 +100,18 @@ def download_image(image_url):
     return save_bytes_to_temp(response.content, suffix)
 
 
-@app.get("/")
+@app.get("/", response_model=HealthCheckResponse, summary="Health check")
 def healthcheck():
     return {"status": "ok"}
 
 
-@app.post("/ocr")
-async def run_ocr(file: UploadFile = File(...)):
+@app.post(
+    "/ocr",
+    response_model=OCRResponse,
+    summary="OCR from uploaded image",
+    description="Upload truc tiep anh giay to xe de OCR va tra ve thong tin trich xuat.",
+)
+async def run_ocr(file: UploadFile = File(..., description="Image file for OCR")):
     suffix = Path(file.filename or "upload.jpg").suffix or ".jpg"
     temp_path = save_bytes_to_temp(await file.read(), suffix)
 
@@ -91,7 +122,12 @@ async def run_ocr(file: UploadFile = File(...)):
             temp_path.unlink()
 
 
-@app.post("/ocr/url")
+@app.post(
+    "/ocr/url",
+    response_model=OCRResponse,
+    summary="OCR from image URL",
+    description="Gui public image URL, backend se tai anh xuong roi OCR.",
+)
 def run_ocr_by_url(payload: OCRUrlRequest):
     temp_path = download_image(payload.image_url)
 

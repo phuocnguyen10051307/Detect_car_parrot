@@ -48,6 +48,7 @@ Các API hiện có:
 - `GET /`
 - `POST /ocr`
 - `POST /ocr/url`
+- `GET /swagger`
 
 ### Chạy backend
 
@@ -58,6 +59,20 @@ cd C:\Users\admin\vehicle-ocr\be
 ../venv/Scripts/python.exe -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+
+### Swagger UI de test API
+
+Mo trinh duyet:
+
+```text
+http://127.0.0.1:8000/swagger
+```
+
+OpenAPI JSON:
+
+```text
+http://127.0.0.1:8000/openapi.json
+```
 
 ### Health check backend
 
