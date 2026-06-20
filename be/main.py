@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from paddleocr import PaddleOCR
 from pydantic import BaseModel, Field
 
-from parser import (
+from .parser import (
     detect_card_color,
     detect_document_type,
     extract_engine,
